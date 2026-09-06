@@ -1,0 +1,42 @@
+# Everything the image builds for itself
+node_modules/
+dist/
+build/
+*.tsbuildinfo
+
+# Version control and CI
+.git/
+.gitignore
+.github/
+
+# Secrets and local config — never bake these into an image
+.env
+.env.*
+
+# Docs, examples and deployment files (not needed to build)
+README.md
+LICENSE
+examples/
+docker-compose.yml
+docker-compose.dev.yml
+Dockerfile
+.dockerignore
+
+# Logs, caches, coverage
+logs/
+*.log
+.npm
+.eslintcache
+.cache/
+.turbo/
+coverage/
+.nyc_output/
+
+# Editors and OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+._*
+Thumbs.db

@@ -1,0 +1,15 @@
+services:
+  remnawave-node-haproxy:
+    build: .
+    image: remnawave-node-haproxy:dev
+    container_name: remnawave-node-haproxy
+    hostname: remnawave-node-haproxy
+    restart: always
+    env_file:
+      - .env
+    network_mode: host
+    logging:
+      driver: json-file
+      options:
+        max-size: '30m'
+        max-file: '5'

@@ -1,0 +1,35 @@
+{
+    "name": "remnawave-node-haproxy",
+    "version": "3.4.1",
+    "private": true,
+    "description": "Remnawave-compatible node that relays traffic with HAProxy instead of Xray",
+    "license": "AGPL-3.0-only",
+    "type": "commonjs",
+    "engines": {
+        "node": ">=24"
+    },
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "start": "node dist/main.js",
+        "dev": "tsc -p tsconfig.json --watch",
+        "typecheck": "tsc --noEmit"
+    },
+    "dependencies": {
+        "@nestjs/common": "^11.1.6",
+        "@nestjs/core": "^11.1.6",
+        "@nestjs/passport": "^11.0.5",
+        "@nestjs/platform-express": "^11.1.6",
+        "helmet": "^8.1.0",
+        "passport": "^0.7.0",
+        "passport-jwt": "^4.0.1",
+        "reflect-metadata": "^0.2.2",
+        "rxjs": "^7.8.2",
+        "zod": "^4.1.5"
+    },
+    "devDependencies": {
+        "@types/express": "^5.0.3",
+        "@types/node": "^22.15.0",
+        "@types/passport-jwt": "^4.0.1",
+        "typescript": "^5.9.2"
+    }
+}

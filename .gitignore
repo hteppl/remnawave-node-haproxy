@@ -1,0 +1,66 @@
+# Dependencies
+node_modules/
+jspm_packages/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# Build output
+dist/
+build/
+out/
+*.tsbuildinfo
+*.tgz
+
+# Environment
+.env
+.env.*
+!.env.sample
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Caches
+.npm
+.eslintcache
+.cache/
+.parcel-cache/
+.rollup.cache/
+.turbo/
+*.pid
+*.seed
+*.pid.lock
+
+# Tests and coverage
+coverage/
+.nyc_output/
+
+# Editors and IDEs
+.idea/
+.vscode/
+!.vscode/extensions.json
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini

@@ -1,0 +1,35 @@
+{
+  "haproxy": {
+    "global": {
+      "maxconn": 20000,
+      "nbthread": 4
+    },
+    "defaults": {
+      "timeoutTunnelMs": 3600000
+    },
+    "frontends": [
+      {
+        "tag": "VLESS_RELAY",
+        "bind": "0.0.0.0",
+        "port": 443,
+        "backend": "origin"
+      }
+    ],
+    "backends": [
+      {
+        "name": "origin",
+        "balance": "roundrobin",
+        "checkIntervalMs": 5000,
+        "servers": [
+          {
+            "name": "origin1",
+            "address": "ORIGIN_NODE_IP",
+            "port": 443,
+            "check": true,
+            "sendProxy": "v2"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+services:
+  remnawave-node-haproxy:
+    image: hteppl/remnawave-node-haproxy:latest
+    container_name: remnawave-node-haproxy
+    hostname: remnawave-node-haproxy
+    restart: always
+    env_file:
+      - .env
+    network_mode: host
+    logging:
+      driver: json-file
+      options:
+        max-size: '30m'
+        max-file: '5'

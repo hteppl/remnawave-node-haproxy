@@ -1,0 +1,77 @@
+{
+  "haproxy": {
+    "global": {
+      "maxconn": 20000,
+      "nbthread": 4
+    },
+    "defaults": {
+      "timeoutTunnelMs": 3600000
+    },
+    "frontends": [
+      {
+        "tag": "VLESS_DE",
+        "port": 443,
+        "backend": "origin-de",
+        "nodes": [
+          "relay-de"
+        ]
+      },
+      {
+        "tag": "VLESS_NL",
+        "port": 443,
+        "backend": "origin-nl",
+        "nodes": [
+          "relay-nl"
+        ]
+      },
+      {
+        "tag": "VLESS_Shared",
+        "port": 8443,
+        "backend": "origin-shared"
+      }
+    ],
+    "backends": [
+      {
+        "name": "origin-de",
+        "servers": [
+          {
+            "name": "de1",
+            "address": "ORIGIN_DE_IP",
+            "port": 443,
+            "sendProxy": "v2"
+          }
+        ]
+      },
+      {
+        "name": "origin-nl",
+        "servers": [
+          {
+            "name": "nl1",
+            "address": "ORIGIN_NL_IP",
+            "port": 443,
+            "sendProxy": "v2"
+          }
+        ]
+      },
+      {
+        "name": "origin-shared",
+        "balance": "leastconn",
+        "servers": [
+          {
+            "name": "de1",
+            "address": "ORIGIN_DE_IP",
+            "port": 8443,
+            "sendProxy": "v2"
+          },
+          {
+            "name": "nl1",
+            "address": "ORIGIN_NL_IP",
+            "port": 8443,
+            "sendProxy": "v2",
+            "backup": true
+          }
+        ]
+      }
+    ]
+  }
+}
