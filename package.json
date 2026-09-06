@@ -1,6 +1,6 @@
 {
     "name": "remnawave-node-haproxy",
-    "version": "3.4.1",
+    "version": "3.4.2",
     "private": true,
     "description": "Remnawave-compatible node that relays traffic with HAProxy instead of Xray",
     "license": "AGPL-3.0-only",
