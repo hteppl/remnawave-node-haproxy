@@ -23,6 +23,13 @@ export const envSchema = z.object({
     /** Report live sessions as "users online"; zero-traffic rows, nothing billed. */
     REPORT_SESSIONS_AS_ONLINE: booleanString('true'),
 
+    /**
+     * What one "user online" counts. `ips` counts distinct client addresses from
+     * the frontend stick-table; `sessions` counts open TCP connections, which a
+     * single client multiplies several times over.
+     */
+    ONLINE_SOURCE: z.enum(['ips', 'sessions']).default('ips'),
+
     /** Auto-detected when unset. */
     NETWORK_INTERFACE: z.string().optional(),
     NETWORK_POLL_INTERVAL_MS: z

@@ -5,6 +5,7 @@
       "nbthread": 4
     },
     "defaults": {
+      "logConnections": false,
       "timeoutTunnelMs": 3600000
     },
     "frontends": [

@@ -62,6 +62,12 @@ export const HaproxyGlobalSchema = z.object({
 });
 
 export const HaproxyDefaultsSchema = z.object({
+    /**
+     * One log line per connection, at `global.logLevel`. A busy relay makes a lot
+     * of them, so turn this off to keep only process-level messages (config
+     * errors, servers going up and down), which are logged either way.
+     */
+    logConnections: z.boolean().default(true),
     timeoutConnectMs: z.number().int().min(100).default(5000),
     timeoutClientMs: z.number().int().min(1000).default(300000),
     timeoutServerMs: z.number().int().min(1000).default(300000),

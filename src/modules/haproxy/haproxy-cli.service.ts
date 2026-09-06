@@ -70,6 +70,32 @@ export class HaproxyCliService {
         return result;
     }
 
+    /**
+     * Entry counts from every stick-table, keyed by the proxy that owns it. Asking
+     * without a table name returns one header line each, so the reply stays small
+     * no matter how many clients are tracked.
+     */
+    public async getStickTableEntries(): Promise<Map<string, number>> {
+        const result = new Map<string, number>();
+
+        let raw: string;
+        try {
+            raw = await this.command('show table');
+        } catch (error) {
+            this.logger.warn(
+                `Could not read HAProxy stick-tables: ${error instanceof Error ? error.message : error}`,
+            );
+            return result;
+        }
+
+        for (const line of raw.split('\n')) {
+            const match = line.match(/^#\s*table:\s*([^,]+),.*\bused:\s*(\d+)/);
+            if (match) result.set(match[1].trim(), Number(match[2]));
+        }
+
+        return result;
+    }
+
     /** Counters from each proxy's FRONTEND row, keyed by proxy name. */
     public async getFrontendCounters(): Promise<Map<string, IProxyCounters>> {
         const result = new Map<string, IProxyCounters>();

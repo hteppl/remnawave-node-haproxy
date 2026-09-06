@@ -4,6 +4,7 @@ import { ENV, TEnv } from '../../config/env';
 import { NetworkStatsService } from '../../common/utils/network-stats.service';
 import { getSystemStats } from '../../common/utils/system-stats';
 import { HaproxyCliService } from '../haproxy/haproxy-cli.service';
+import { ONLINE_TABLE } from '../haproxy/haproxy-config.builder';
 import { RelayService } from '../relay/relay.service';
 import { TrafficTracker } from './traffic-tracker';
 
@@ -20,6 +21,8 @@ export class StatsService {
 
     /** Far above any real user id, so a session row never touches a real account. */
     private static readonly SYNTHETIC_ID_BASE = 1_000_000_000_000;
+
+    private warnedAboutMissingTable = false;
 
     constructor(
         private readonly haproxyCli: HaproxyCliService,
@@ -52,21 +55,50 @@ export class StatsService {
     /**
      * "Users online" = rows the panel counts here, but only those with a numeric
      * (BigInt) username. A relay has no real ids, so it emits one zero-byte row
-     * per live session under a synthetic id (see SYNTHETIC_ID_BASE). Off -> 0.
+     * per counted client under a synthetic id (see SYNTHETIC_ID_BASE). Off -> 0.
      */
     public async getUsersStats(): Promise<Array<{ username: string; uplink: number; downlink: number }>> {
         if (!this.env.REPORT_SESSIONS_AS_ONLINE) return [];
 
-        const counters = await this.haproxyCli.getFrontendCounters();
-        const sessions = this.relayService
-            .getFrontends()
-            .reduce((total, frontend) => total + (counters.get(frontend.proxyName)?.scur ?? 0), 0);
+        const online = await this.countOnline();
 
-        return Array.from({ length: sessions }, (_, index) => ({
+        return Array.from({ length: online }, (_, index) => ({
             username: String(StatsService.SYNTHETIC_ID_BASE + index),
             uplink: 0,
             downlink: 0,
         }));
+    }
+
+    /**
+     * TLS is opaque to a relay, so a client can only be counted by its address.
+     * One client opens several connections at once, which is why `sessions`
+     * overcounts by roughly the number of streams a client keeps open.
+     */
+    private async countOnline(): Promise<number> {
+        if (this.env.ONLINE_SOURCE === 'ips') {
+            const entries = (await this.haproxyCli.getStickTableEntries()).get(ONLINE_TABLE);
+
+            // Every frontend shares one table, so a client on two ports counts once.
+            if (entries !== undefined) {
+                this.warnedAboutMissingTable = false;
+                return entries;
+            }
+
+            // A config built before this table existed is still running; the next
+            // panel sync replaces it. Warn once instead of on every poll.
+            if (!this.warnedAboutMissingTable) {
+                this.warnedAboutMissingTable = true;
+                this.logger.warn(
+                    `ONLINE_SOURCE=ips, but HAProxy has no "${ONLINE_TABLE}" table; counting sessions until the next config sync.`,
+                );
+            }
+        }
+
+        const counters = await this.haproxyCli.getFrontendCounters();
+
+        return this.relayService
+            .getFrontends()
+            .reduce((total, frontend) => total + (counters.get(frontend.proxyName)?.scur ?? 0), 0);
     }
 
     /** A relay has no outbounds; empty keeps the panel from counting egress twice. */

@@ -36,6 +36,21 @@ export interface IBuildOptions {
 
 export class ConfigBuildError extends Error {}
 
+/**
+ * Frontends track client addresses so "users online" can count distinct clients
+ * instead of connections (one client opens several). The table is shared by every
+ * frontend, so a client on two ports counts once. Its name cannot collide with a
+ * user's backend, which is always `be_`-prefixed. The short expiry keeps `show
+ * table`'s `used` close to what is live now, which is the cheap O(1) read;
+ * entries cost ~50 bytes each (`size` is a cap, not an allocation).
+ *
+ * The last of HAProxy's three sticky counters, so `extra` keeps sc0 and sc1 for
+ * rate limiting; tracking one counter twice is a fatal config error.
+ */
+export const ONLINE_TABLE = 'online_clients';
+const STICK_TABLE_SIZE = '100k';
+const STICK_TABLE_EXPIRE = '30s';
+
 /** Proxy names accept a limited character set; inbound tags do not. */
 function sanitizeName(value: string): string {
     return value.replace(/[^A-Za-z0-9_.:-]/g, '_');
@@ -84,6 +99,11 @@ function renderServer(server: TRelayServer, index: number, defaultPort: number, 
 /** Renders the node integration's HAProxy config to an haproxy.cfg. */
 export function buildHaproxyConfig(config: THaproxyConfig, options: IBuildOptions): IBuiltConfig {
     const { runtime, node } = options;
+
+    // A relay carries far more connections than a normal proxy, and each one is a
+    // log line. Turning it off keeps process-level messages (server up/down,
+    // alerts), which do not go through the proxies' own logging.
+    const logSessions = config.defaults.logConnections;
 
     const warnings: string[] = [];
     const skipped: string[] = [];
@@ -170,8 +190,9 @@ export function buildHaproxyConfig(config: THaproxyConfig, options: IBuildOption
                 `frontend fe_${proxyName}`,
                 ...bindLines,
                 '    mode tcp',
-                '    option tcplog',
+                ...(logSessions ? ['    option tcplog'] : []),
                 ...(frontend.extra ?? []).map((line) => `    ${line}`),
+                `    tcp-request content track-sc2 src table ${ONLINE_TABLE}`,
                 `    default_backend ${backendProxyName}`,
             ].join('\n'),
         );
@@ -208,6 +229,15 @@ export function buildHaproxyConfig(config: THaproxyConfig, options: IBuildOption
         );
     }
 
+    if (frontends.length > 0) {
+        backendSections.push(
+            [
+                `backend ${ONLINE_TABLE}`,
+                `    stick-table type ip size ${STICK_TABLE_SIZE} expire ${STICK_TABLE_EXPIRE} store conn_cur`,
+            ].join('\n'),
+        );
+    }
+
     const { global, defaults } = config;
 
     // Workers drop to `user` and are confined to `chroot`; the master keeps root to
@@ -237,9 +267,9 @@ export function buildHaproxyConfig(config: THaproxyConfig, options: IBuildOption
 
     const defaultsSection = [
         'defaults',
-        '    log global',
+        // Without `log global` a proxy logs no session at all, not even a short line.
+        ...(logSessions ? ['    log global', '    option dontlognull'] : []),
         '    mode tcp',
-        '    option dontlognull',
         `    retries ${defaults.retries}`,
         `    timeout connect ${defaults.timeoutConnectMs}ms`,
         `    timeout client ${defaults.timeoutClientMs}ms`,
