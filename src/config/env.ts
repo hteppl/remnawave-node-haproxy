@@ -20,8 +20,13 @@ export const envSchema = z.object({
     HAPROXY_CONFIG_PATH: z.string().default('/etc/haproxy/haproxy.cfg'),
     HAPROXY_RUNTIME_DIR: z.string().default('/var/run/haproxy'),
 
-    /** Report live sessions as "users online"; zero-traffic rows, nothing billed. */
-    REPORT_SESSIONS_AS_ONLINE: booleanString('true'),
+    /**
+     * Report connected clients as "users online"; zero-traffic rows, nothing
+     * billed. Off by default: a relay cannot tell users apart, so the count is an
+     * estimate (see ONLINE_SOURCE) and the panel shows nothing rather than a
+     * number that disagrees with the origin node.
+     */
+    REPORT_SESSIONS_AS_ONLINE: booleanString('false'),
 
     /**
      * What one "user online" counts. `ips` counts distinct client addresses from
